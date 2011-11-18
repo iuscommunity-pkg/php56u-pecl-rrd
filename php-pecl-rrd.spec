@@ -5,9 +5,9 @@
 
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
-Version:      1.0.4
+Version:      1.0.5
 Release:      1%{?dist}
-License:      PHP
+License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
 
@@ -42,6 +42,17 @@ system for time series data.
 %prep 
 %setup -c -q
 
+extver=$(sed -n '/#define PHP_RRD_VERSION/{s/.* "//;s/".*$//;p}' %{pecl_name}-%{version}%{?pre}/php_rrd.h)
+if test "x${extver}" != "x%{version}%{?pre}"; then
+   : Error: Upstream version is ${extver}, expecting %{version}.
+   exit 1
+fi
+
+cat > %{pecl_name}.ini << 'EOF'
+; Enable %{pecl_name} extension module
+extension=%{pecl_name}.so
+EOF
+
 
 %build
 cd %{pecl_name}-%{version}
@@ -52,20 +63,14 @@ make %{?_smp_mflags}
 
 
 %install
-cd %{pecl_name}-%{version}
 rm -rf %{buildroot}
-make install INSTALL_ROOT=%{buildroot}
+make install -C %{pecl_name}-%{version}%{?pre} INSTALL_ROOT=%{buildroot}
 
 # Drop in the bit of configuration
-mkdir -p %{buildroot}%{_sysconfdir}/php.d
-cat > %{buildroot}%{_sysconfdir}/php.d/%{pecl_name}.ini << 'EOF'
-; Enable %{pecl_name} extension module
-extension=%{pecl_name}.so
-EOF
+install -D -m 644 %{pecl_name}.ini %{buildroot}%{_sysconfdir}/php.d/%{pecl_name}.ini
 
 # Install XML package description
-mkdir -p %{buildroot}%{pecl_xmldir}
-install -m 644 ../package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
 
 %check
@@ -119,6 +124,10 @@ fi
 
 
 %changelog
+* Fri Nov 18 2011 Remi Collet <remi@fedoraproject.org> 1.0.5-1
+- update to 1.0.5
+- change license from PHP to BSD
+
 * Tue Aug 16 2011 Remi Collet <Fedora@FamilleCollet.com> 1.0.4-1
 - Version 1.0.4 (stable) - API 1.0.4 (stable)
 - fix filters
