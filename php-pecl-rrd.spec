@@ -6,7 +6,7 @@
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
 Version:      1.1.0
-Release:      2%{?dist}
+Release:      3%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
@@ -128,6 +128,9 @@ fi
 
 
 %changelog
+* Fri Mar 22 2013 Remi Collet <rcollet@redhat.com> - 1.1.0-3
+- rebuild for http://fedoraproject.org/wiki/Features/Php55
+
 * Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.0-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
