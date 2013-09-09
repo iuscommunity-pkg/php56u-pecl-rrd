@@ -13,12 +13,16 @@
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
 Version:      1.1.1
-Release:      1%{?dist}
+Release:      2%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
 
-Source:       http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
+Source0:      http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
+
+# Fix build warning   http://svn.php.net/viewvc?view=revision&revision=331314
+# Fix test strictness http://svn.php.net/viewvc?view=revision&revision=331315
+Patch0:        %{pecl_name}-svn.patch
 
 BuildRequires: php-devel >= 5.3.2
 BuildRequires: rrdtool
@@ -50,11 +54,16 @@ system for time series data.
 %prep 
 %setup -c -q
 
-extver=$(sed -n '/#define PHP_RRD_VERSION/{s/.* "//;s/".*$//;p}' %{pecl_name}-%{version}%{?pre}/php_rrd.h)
+cd %{pecl_name}-%{version}
+
+%patch0 -p3 -b .svn
+
+extver=$(sed -n '/#define PHP_RRD_VERSION/{s/.* "//;s/".*$//;p}' php_rrd.h)
 if test "x${extver}" != "x%{version}%{?pre}"; then
    : Error: Upstream version is ${extver}, expecting %{version}.
    exit 1
 fi
+cd ..
 
 cat > %{pecl_name}.ini << 'EOF'
 ; Enable %{pecl_name} extension module
@@ -98,12 +107,7 @@ if  grep -q "FAILED TEST" rpmtests.log; then
      diff -u tests/$(basename $t .diff).exp tests/$(basename $t .diff).out || :
   done
 
-  # tests only succeed with some rrdtool version (> 1.4.0 but < 1.4.7)
-  # because of difference between image size / position
-  # http://pecl.php.net/bugs/22642
-
-  # only consider result of rrd_version test
-  [ -f tests/rrd_020.diff ] && exit 1
+  exit 1
 fi
 
 
@@ -129,6 +133,10 @@ fi
 
 
 %changelog
+* Mon Sep 09 2013 Remi Collet <remi@fedoraproject.org> - 1.1.1-2
+- patch for build warning
+- patch to fix test result with recent rrdtool
+
 * Mon Sep 09 2013 Remi Collet <remi@fedoraproject.org> - 1.1.1-1
 - Update to 1.1.1
 

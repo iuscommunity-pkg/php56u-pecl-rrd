@@ -1,0 +1,145 @@
+--- pecl/rrd/trunk/rrd_create.c	2013/09/09 06:16:12	331313
++++ pecl/rrd/trunk/rrd_create.c	2013/09/09 06:51:03	331314
+@@ -71,7 +71,9 @@
+ {
+ 	rrd_create_object *intern_obj;
+ 	zend_object_value retval;
++#if ZEND_MODULE_API_NO  < 20100409
+ 	zval *tmp;
++#endif
+ 
+ 	intern_obj = ecalloc(1, sizeof(*intern_obj));
+ 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
+--- pecl/rrd/trunk/rrd_graph.c	2013/09/09 06:16:12	331313
++++ pecl/rrd/trunk/rrd_graph.c	2013/09/09 06:51:03	331314
+@@ -62,7 +62,9 @@
+ {
+ 	rrd_graph_object *intern_obj;
+ 	zend_object_value retval;
++#if ZEND_MODULE_API_NO  < 20100409
+ 	zval *tmp;
++#endif
+ 
+ 	intern_obj = ecalloc(1, sizeof(*intern_obj));
+ 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
+@@ -280,7 +282,7 @@
+ {
+ 	rrd_graph_object *intern_obj = (rrd_graph_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
+ 	/* return value from rrd_graphv */
+-	rrd_info_t *rrd_info_data, *data_p;
++	rrd_info_t *rrd_info_data;
+ 
+ 	/* arguments for rrd_graph call */
+ 	rrd_args *graph_argv;
+--- pecl/rrd/trunk/rrd_info.c	2013/09/09 06:16:12	331313
++++ pecl/rrd/trunk/rrd_info.c	2013/09/09 06:51:03	331314
+@@ -31,7 +31,7 @@
+ 	 */
+ 	char *argv[3];
+ 	/* return value from rrd_info_r() */
+-	rrd_info_t *rrd_info_data, *data_p;
++	rrd_info_t *rrd_info_data;
+ 
+ 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename,
+ 		&filename_length) == FAILURE) {
+@@ -82,7 +82,7 @@
+ 			add_assoc_string(array, data_p->key, data_p->value.u_str, 1);
+ 			break;
+ 		case RD_I_BLO:
+-			add_assoc_stringl(array, data_p->key, data_p->value.u_blo.ptr,
++			add_assoc_stringl(array, data_p->key, (char *)data_p->value.u_blo.ptr,
+ 				 data_p->value.u_blo.size, 1);
+ 			break;
+ 		}
+@@ -91,4 +91,4 @@
+ 
+ 	return 1;
+ }
+-/* }}} */
+\ No newline at end of file
++/* }}} */
+--- pecl/rrd/trunk/rrd_update.c	2013/09/09 06:16:12	331313
++++ pecl/rrd/trunk/rrd_update.c	2013/09/09 06:51:03	331314
+@@ -56,7 +56,9 @@
+ {
+ 	rrd_update_object *intern_obj;
+ 	zend_object_value retval;
++#if ZEND_MODULE_API_NO  < 20100409
+ 	zval *tmp;
++#endif
+ 
+ 	intern_obj = ecalloc(1, sizeof(*intern_obj));
+ 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
+Index: tests/rrd_002.phpt
+===================================================================
+--- pecl/rrd/trunk/tests/rrd_002.phpt	(révision 331313)
++++ pecl/rrd/trunk/tests/rrd_002.phpt	(copie de travail)
+@@ -29,8 +29,8 @@
+   ["xsize"]=>
+   int(497)
+   ["ysize"]=>
+-  int(148)
++  int(%d)
+   ["calcpr"]=>
+   NULL
+ }
+-bool(true)
+\ Pas de retour chariot à la fin du fichier
++bool(true)
+Index: tests/rrd_008.phpt
+===================================================================
+--- pecl/rrd/trunk/tests/rrd_008.phpt	(révision 331313)
++++ pecl/rrd/trunk/tests/rrd_008.phpt	(copie de travail)
+@@ -39,7 +39,7 @@
+   ["xsize"]=>
+   int(497)
+   ["ysize"]=>
+-  int(148)
++  int(%d)
+   ["calcpr"]=>
+   NULL
+ }
+Index: tests/rrd_018.phpt
+===================================================================
+--- pecl/rrd/trunk/tests/rrd_018.phpt	(révision 331313)
++++ pecl/rrd/trunk/tests/rrd_018.phpt	(copie de travail)
+@@ -29,7 +29,7 @@
+   ["graph_left"]=>
+   int(67)
+   ["graph_top"]=>
+-  int(22)
++  int(%d)
+   ["graph_width"]=>
+   int(400)
+   ["graph_height"]=>
+@@ -37,7 +37,7 @@
+   ["image_width"]=>
+   int(497)
+   ["image_height"]=>
+-  int(148)
++  int(%d)
+   ["graph_start"]=>
+   int(920804400)
+   ["graph_end"]=>
+Index: tests/rrd_019.phpt
+===================================================================
+--- pecl/rrd/trunk/tests/rrd_019.phpt	(révision 331313)
++++ pecl/rrd/trunk/tests/rrd_019.phpt	(copie de travail)
+@@ -34,7 +34,7 @@
+   ["graph_left"]=>
+   int(67)
+   ["graph_top"]=>
+-  int(22)
++  int(%d)
+   ["graph_width"]=>
+   int(400)
+   ["graph_height"]=>
+@@ -42,7 +42,7 @@
+   ["image_width"]=>
+   int(497)
+   ["image_height"]=>
+-  int(148)
++  int(%d)
+   ["graph_start"]=>
+   int(920804400)
+   ["graph_end"]=>
