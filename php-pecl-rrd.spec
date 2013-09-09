@@ -1,19 +1,25 @@
+# spec file for php-pecl-rrd
+#
+# Copyright (c) 2011-2013 Remi Collet
+# License: CC-BY-SA
+# http://creativecommons.org/licenses/by-sa/3.0/
+#
+# Please, preserve the changelog entries
+#
 %{!?__pecl:     %{expand: %%global __pecl     %{_bindir}/pecl}}
-%{!?php_extdir: %{expand: %%global php_extdir %(php-config --extension-dir)}}
 
 %global pecl_name rrd
 
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
-Version:      1.1.0
-Release:      4%{?dist}
+Version:      1.1.1
+Release:      1%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
 
 Source:       http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
-BuildRoot:    %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: php-devel >= 5.3.2
 BuildRequires: rrdtool
 BuildRequires: rrdtool-devel >= 1.3.0
@@ -27,13 +33,13 @@ Requires:     php(api) = %{php_core_api}
 Conflicts:    rrdtool-php
 Provides:     php-pecl(%{pecl_name}) = %{version}
 Provides:     php-pecl(%{pecl_name})%{?_isa} = %{version}
+Provides:     php-%{pecl_name} = %{version}%{?pre}
+Provides:     php-%{pecl_name}%{?_isa} = %{version}%{?pre}
 
 
-# RPM 4.8
-%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
+# Filter private shared object
+%{?filter_provides_in: %filter_provides_in %{_dir}/.*\.so$}
 %{?filter_setup}
-# RPM 4.9
-%global __provides_exclude_from %{?__provides_exclude_from:%__provides_exclude_from|}%{php_extdir}/.*\\.so$
 
 
 %description
@@ -65,7 +71,6 @@ make %{?_smp_mflags}
 
 
 %install
-rm -rf %{buildroot}
 make install -C %{pecl_name}-%{version}%{?pre} INSTALL_ROOT=%{buildroot}
 
 # Drop in the bit of configuration
@@ -101,9 +106,6 @@ if  grep -q "FAILED TEST" rpmtests.log; then
   [ -f tests/rrd_020.diff ] && exit 1
 fi
 
-%clean
-rm -rf %{buildroot}
-
 
 %if 0%{?pecl_install:1}
 %post
@@ -120,7 +122,6 @@ fi
 
 
 %files
-%defattr(-, root, root, -)
 %doc %{pecl_name}-%{version}/CREDITS %{pecl_name}-%{version}/LICENSE
 %config(noreplace) %{_sysconfdir}/php.d/%{pecl_name}.ini
 %{php_extdir}/%{pecl_name}.so
@@ -128,6 +129,9 @@ fi
 
 
 %changelog
+* Mon Sep 09 2013 Remi Collet <remi@fedoraproject.org> - 1.1.1-1
+- Update to 1.1.1
+
 * Sun Aug 04 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.0-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
 
