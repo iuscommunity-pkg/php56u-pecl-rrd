@@ -1,145 +1,86 @@
---- pecl/rrd/trunk/rrd_create.c	2013/09/09 06:16:12	331313
-+++ pecl/rrd/trunk/rrd_create.c	2013/09/09 06:51:03	331314
-@@ -71,7 +71,9 @@
- {
- 	rrd_create_object *intern_obj;
- 	zend_object_value retval;
-+#if ZEND_MODULE_API_NO  < 20100409
- 	zval *tmp;
+Index: config.m4
+===================================================================
+--- config.m4	(révision 332618)
++++ config.m4	(copie de travail)
+@@ -67,6 +67,9 @@
+   dnl rrd_lastupdate_r available in 1.4.0+
+   PHP_CHECK_FUNC(rrd_lastupdate_r, rrd)
+ 
++  dnl rrd_disconnect available in 1.4.0+
++  PHP_CHECK_FUNC(rrdc_disconnect, rrd)
++
+   LDFLAGS=$old_LDFLAGS
+ 
+   PHP_NEW_EXTENSION(rrd, rrd.c rrd_graph.c rrd_create.c rrd_update.c rrd_info.c, $ext_shared)
+Index: rrd.c
+===================================================================
+--- rrd.c	(révision 332618)
++++ rrd.c	(copie de travail)
+@@ -481,6 +481,7 @@
+ }
+ /* }}} */
+ 
++#ifdef HAVE_RRDC_DISCONNECT
+ /* {{{ proto void rrdc_disconnect()
+  * Close any outstanding connection to rrd cache daemon.
+  */
+@@ -492,6 +493,7 @@
+ 
+ 	rrdc_disconnect();
+ }
 +#endif
  
- 	intern_obj = ecalloc(1, sizeof(*intern_obj));
- 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
---- pecl/rrd/trunk/rrd_graph.c	2013/09/09 06:16:12	331313
-+++ pecl/rrd/trunk/rrd_graph.c	2013/09/09 06:51:03	331314
-@@ -62,7 +62,9 @@
- {
- 	rrd_graph_object *intern_obj;
- 	zend_object_value retval;
-+#if ZEND_MODULE_API_NO  < 20100409
- 	zval *tmp;
+ /* {{{ proto string rrd_version()
+  * Gets version of underlying librrd.
+@@ -573,7 +575,9 @@
+ 	PHP_FE(rrd_restore, arginfo_rrd_restore)
+ 	PHP_FE(rrd_tune, arginfo_rrd_tune)
+ 	PHP_FE(rrd_xport, arginfo_rrd_xport)
++#ifdef HAVE_RRDC_DISCONNECT
+ 	PHP_FE(rrdc_disconnect, NULL)
 +#endif
- 
- 	intern_obj = ecalloc(1, sizeof(*intern_obj));
- 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
-@@ -280,7 +282,7 @@
+ 	PHP_FE(rrd_version, NULL)
+ 	{NULL, NULL, NULL}
+ };
+@@ -609,7 +613,9 @@
+ static PHP_MSHUTDOWN_FUNCTION(rrd)
  {
- 	rrd_graph_object *intern_obj = (rrd_graph_object *)zend_object_store_get_object(getThis() TSRMLS_CC);
- 	/* return value from rrd_graphv */
--	rrd_info_t *rrd_info_data, *data_p;
-+	rrd_info_t *rrd_info_data;
- 
- 	/* arguments for rrd_graph call */
- 	rrd_args *graph_argv;
---- pecl/rrd/trunk/rrd_info.c	2013/09/09 06:16:12	331313
-+++ pecl/rrd/trunk/rrd_info.c	2013/09/09 06:51:03	331314
-@@ -31,7 +31,7 @@
- 	 */
- 	char *argv[3];
- 	/* return value from rrd_info_r() */
--	rrd_info_t *rrd_info_data, *data_p;
-+	rrd_info_t *rrd_info_data;
- 
- 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &filename,
- 		&filename_length) == FAILURE) {
-@@ -82,7 +82,7 @@
- 			add_assoc_string(array, data_p->key, data_p->value.u_str, 1);
- 			break;
- 		case RD_I_BLO:
--			add_assoc_stringl(array, data_p->key, data_p->value.u_blo.ptr,
-+			add_assoc_stringl(array, data_p->key, (char *)data_p->value.u_blo.ptr,
- 				 data_p->value.u_blo.size, 1);
- 			break;
- 		}
-@@ -91,4 +91,4 @@
- 
- 	return 1;
- }
--/* }}} */
-\ No newline at end of file
-+/* }}} */
---- pecl/rrd/trunk/rrd_update.c	2013/09/09 06:16:12	331313
-+++ pecl/rrd/trunk/rrd_update.c	2013/09/09 06:51:03	331314
-@@ -56,7 +56,9 @@
- {
- 	rrd_update_object *intern_obj;
- 	zend_object_value retval;
-+#if ZEND_MODULE_API_NO  < 20100409
- 	zval *tmp;
+ 	/* ensure that any connection to rrd cache deamon will be closed */
++#ifdef HAVE_RRDC_DISCONNECT
+ 	rrdc_disconnect();
 +#endif
- 
- 	intern_obj = ecalloc(1, sizeof(*intern_obj));
- 	zend_object_std_init(&intern_obj->std, ce TSRMLS_CC);
-Index: tests/rrd_002.phpt
-===================================================================
---- pecl/rrd/trunk/tests/rrd_002.phpt	(révision 331313)
-+++ pecl/rrd/trunk/tests/rrd_002.phpt	(copie de travail)
-@@ -29,8 +29,8 @@
-   ["xsize"]=>
-   int(497)
-   ["ysize"]=>
--  int(148)
-+  int(%d)
-   ["calcpr"]=>
-   NULL
+ 	return SUCCESS;
  }
--bool(true)
-\ Pas de retour chariot à la fin du fichier
-+bool(true)
-Index: tests/rrd_008.phpt
+ /* }}} */
+Index: tests/rrd_012.phpt
 ===================================================================
---- pecl/rrd/trunk/tests/rrd_008.phpt	(révision 331313)
-+++ pecl/rrd/trunk/tests/rrd_008.phpt	(copie de travail)
-@@ -39,7 +39,7 @@
-   ["xsize"]=>
-   int(497)
-   ["ysize"]=>
--  int(148)
-+  int(%d)
-   ["calcpr"]=>
-   NULL
- }
-Index: tests/rrd_018.phpt
+--- tests/rrd_012.phpt	(révision 332618)
++++ tests/rrd_012.phpt	(copie de travail)
+@@ -11,6 +11,8 @@
+ --FILE--
+ <?php
+ include('data/definition.inc');
++putenv('LANG=C');
++setlocale(LC_ALL, 'C');
+ var_dump($info = rrd_info($data_updatedDb));
+ var_dump($info["filename"] == $data_updatedDb);
+ ?>
+Index: tests/rrd_022.phpt
 ===================================================================
---- pecl/rrd/trunk/tests/rrd_018.phpt	(révision 331313)
-+++ pecl/rrd/trunk/tests/rrd_018.phpt	(copie de travail)
-@@ -29,7 +29,7 @@
-   ["graph_left"]=>
-   int(67)
-   ["graph_top"]=>
--  int(22)
-+  int(%d)
-   ["graph_width"]=>
-   int(400)
-   ["graph_height"]=>
-@@ -37,7 +37,7 @@
-   ["image_width"]=>
-   int(497)
-   ["image_height"]=>
--  int(148)
-+  int(%d)
-   ["graph_start"]=>
-   int(920804400)
-   ["graph_end"]=>
-Index: tests/rrd_019.phpt
-===================================================================
---- pecl/rrd/trunk/tests/rrd_019.phpt	(révision 331313)
-+++ pecl/rrd/trunk/tests/rrd_019.phpt	(copie de travail)
-@@ -34,7 +34,7 @@
-   ["graph_left"]=>
-   int(67)
-   ["graph_top"]=>
--  int(22)
-+  int(%d)
-   ["graph_width"]=>
-   int(400)
-   ["graph_height"]=>
-@@ -42,7 +42,7 @@
-   ["image_width"]=>
-   int(497)
-   ["image_height"]=>
--  int(148)
-+  int(%d)
-   ["graph_start"]=>
-   int(920804400)
-   ["graph_end"]=>
+--- tests/rrd_022.phpt	(révision 332618)
++++ tests/rrd_022.phpt	(copie de travail)
+@@ -1,7 +1,13 @@
+ --TEST--
+ rrdc_disconnect test
+ --SKIPIF--
+-<?php include('skipif.inc'); ?>
++<?php
++include('skipif.inc');
++if (!function_exists("rrdc_disconnect")) {
++	die("skip rrdc_disconnect only in rrdtool >= 1.4");
++}
++
++?>
+ --FILE--
+ <?php
+ var_dump(rrdc_disconnect());
