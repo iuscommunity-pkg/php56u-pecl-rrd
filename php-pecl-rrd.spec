@@ -15,18 +15,13 @@
 
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
-Version:      1.1.2
+Version:      1.1.3
 Release:      1%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
 
 Source0:      http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
-
-# http://svn.php.net/viewvc?view=revision&revision=332619
-# http://svn.php.net/viewvc?view=revision&revision=332620
-# fix build with rrdtool < 1.4
-Patch0:       %{pecl_name}-svn.patch
 
 BuildRequires: php-devel >= 5.3.2
 BuildRequires: rrdtool
@@ -61,10 +56,6 @@ system for time series data.
 %setup -c -q
 
 mv %{pecl_name}-%{version} NTS
-
-cd NTS
-%patch0 -p0 -b .svn
-cd ..
 
 cat > %{pecl_name}.ini << 'EOF'
 ; Enable %{pecl_name} extension module
@@ -170,6 +161,10 @@ fi
 
 
 %changelog
+* Wed Jan 15 2014 Remi Collet <remi@fedoraproject.org> - 1.1.3-1
+- Update to 1.1.3 (stable)
+- drop merged patch
+
 * Tue Jan 14 2014 Remi Collet <remi@fedoraproject.org> - 1.1.2-1
 - Update to 1.1.2 (stable)
 - install doc in pecl doc_dir
