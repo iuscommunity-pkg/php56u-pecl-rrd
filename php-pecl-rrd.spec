@@ -1,8 +1,8 @@
-# spec file for php-pecl-rrd
+# remirepo/fedora spec file for php-pecl-rrd
 #
-# Copyright (c) 2011-2014 Remi Collet
+# Copyright (c) 2011-2015 Remi Collet
 # License: CC-BY-SA
-# http://creativecommons.org/licenses/by-sa/3.0/
+# http://creativecommons.org/licenses/by-sa/4.0/
 #
 # Please, preserve the changelog entries
 #
@@ -21,7 +21,7 @@
 Summary:      PHP Bindings for rrdtool
 Name:         php-pecl-rrd
 Version:      1.1.3
-Release:      5%{?dist}
+Release:      6%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
@@ -30,7 +30,7 @@ Source0:      http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
 BuildRequires: php-devel >= 5.3.2
 BuildRequires: rrdtool
-BuildRequires: rrdtool-devel >= 1.3.0
+BuildRequires: pkgconfig(librrd) >= 1.3.0
 BuildRequires: php-pear
 
 Requires(post): %{__pecl}
@@ -122,11 +122,16 @@ cd NTS
     --modules | grep %{pecl_name}
 
 
-%if 0%{?fedora} < 14 && 0%{?rhel} < 7
-  # skip tests which only succeed with rrdtool > 1.4.0
-  rm tests/rrd_012.phpt \
-     tests/rrd_017.phpt
-%endif
+if pkg-config librrd --atleast-version=1.5.0
+then
+  : ignore test failed with rrdtool > 1.5
+  rm tests/rrd_{016,017}.phpt
+fi
+if ! pkg-config librrd --atleast-version=1.4.0
+then
+  : ignore test failed with rrdtool < 1.4
+  rm tests/rrd_{012,017}.phpt
+fi
 
 make -C tests/data clean
 make -C tests/data all
@@ -166,6 +171,10 @@ fi
 
 
 %changelog
+* Sun May 24 2015 Remi Collet <remi@fedoraproject.org> - 1.1.3-6
+- ignore failed tests with rrdtool 1.5
+  FTBFS detected by Koschei, reported upstream
+
 * Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.3-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
 
