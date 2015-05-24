@@ -121,7 +121,8 @@ cd NTS
     --define extension=modules/%{pecl_name}.so \
     --modules | grep %{pecl_name}
 
-
+# See https://bugzilla.redhat.com/1224530 - segfault on ARM
+%ifnarch %{arm}
 if pkg-config librrd --atleast-version=1.5.0
 then
   : ignore test failed with rrdtool > 1.5
@@ -135,16 +136,13 @@ fi
 
 make -C tests/data clean
 make -C tests/data all
-make test NO_INTERACTION=1 | tee rpmtests.log
 
-if  grep -q "FAILED TEST" rpmtests.log; then
-  for t in tests/*diff; do
-     echo "*** FAILED: $(basename $t .diff)"
-     diff -u tests/$(basename $t .diff).exp tests/$(basename $t .diff).out || :
-  done
-
-  exit 1
-fi
+TEST_PHP_EXECUTABLE=%{_bindir}/php \
+TEST_PHP_ARGS="-n -d extension_dir= -d extension=$PWD/modules/%{pecl_name}.so" \
+NO_INTERACTION=1 \
+REPORT_EXIT_STATUS=1 \
+%{_bindir}/php -n run-tests.php --show-diff
+%endif
 
 
 %post
@@ -174,6 +172,7 @@ fi
 * Sun May 24 2015 Remi Collet <remi@fedoraproject.org> - 1.1.3-6
 - ignore failed tests with rrdtool 1.5
   FTBFS detected by Koschei, reported upstream
+- skip test suite on arm
 
 * Sun Aug 17 2014 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.3-5
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_21_22_Mass_Rebuild
