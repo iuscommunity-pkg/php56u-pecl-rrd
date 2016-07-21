@@ -138,12 +138,12 @@ pushd NTS
 %ifnarch %{arm}
 if pkg-config librrd --atleast-version=1.5.0
 then
-  : ignore test failed with rrdtool > 1.5
+  : ignore test failed with rrdtool greater than 1.5
   rm tests/rrd_{016,017}.phpt
 fi
 if ! pkg-config librrd --atleast-version=1.4.0
 then
-  : ignore test failed with rrdtool < 1.4
+  : ignore test failed with rrdtool less than 1.4
   rm tests/rrd_{012,017}.phpt
 fi
 
