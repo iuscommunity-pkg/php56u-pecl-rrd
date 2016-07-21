@@ -108,7 +108,7 @@ make install -C NTS INSTALL_ROOT=%{buildroot}
 install -D -m 644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
 
 # Install XML package description
-install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
+install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{pecl_name}.xml
 
 %if %{with zts}
 make install -C ZTS INSTALL_ROOT=%{buildroot}
@@ -162,7 +162,7 @@ popd
 
 %if 0%{?pecl_install:1}
 %post
-%{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
+%{pecl_install} %{pecl_xmldir}/%{pecl_name}.xml >/dev/null || :
 %endif
 
 
@@ -180,7 +180,7 @@ fi
 %doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
-%{pecl_xmldir}/%{name}.xml
+%{pecl_xmldir}/%{pecl_name}.xml
 
 %if %{with zts}
 %config(noreplace) %{php_ztsinidir}/%{ini_name}
@@ -193,6 +193,7 @@ fi
 - Port from Fedora to IUS
 - Don't install/register tests
 - Handle license properly
+- Install package.xml as %%{pecl_name}.xml, not %%{name}.xml
 
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.1.3-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
