@@ -72,6 +72,7 @@ mv %{pecl_name}-%{version} NTS
 
 # Don't install/register tests
 sed -e 's/role="test"/role="src"/' \
+    -e '/LICENSE/s/role="doc"/role="src"/' \
     -i package.xml
 
 cat > %{ini_name} << 'EOF'
@@ -174,6 +175,8 @@ fi
 
 
 %files
+%{!?_licensedir:%global license %%doc}
+%license NTS/LICENSE
 %doc %{pecl_docdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
@@ -189,6 +192,7 @@ fi
 * Thu Jul 21 2016 Carl George <carl.george@rackspace.com> - 1.1.3-1.ius
 - Port from Fedora to IUS
 - Don't install/register tests
+- Handle license properly
 
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.1.3-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
