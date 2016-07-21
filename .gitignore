@@ -1,9 +1,6 @@
-clog
-package-*.xml
-/rrd-1.0.3.tgz
-/rrd-1.0.4.tgz
-/rrd-1.0.5.tgz
-/rrd-1.1.0.tgz
-/rrd-1.1.1.tgz
-/rrd-1.1.2.tgz
-/rrd-1.1.3.tgz
+BUILD
+BUILDROOT
+MOCK
+RPMS
+SOURCES/*.tgz
+SRPMS
