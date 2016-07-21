@@ -70,6 +70,10 @@ system for time series data.
 
 mv %{pecl_name}-%{version} NTS
 
+# Don't install/register tests
+sed -e 's/role="test"/role="src"/' \
+    -i package.xml
+
 cat > %{ini_name} << 'EOF'
 ; Enable %{pecl_name} extension module
 extension=%{pecl_name}.so
@@ -111,9 +115,6 @@ install -D -m 644 %{ini_name} %{buildroot}%{php_ztsinidir}/%{ini_name}
 %endif
 
 # Test & Documentation
-for i in $(grep 'role="test"' package.xml | sed -e 's/^.*name="//;s/".*$//')
-do install -Dpm 644 NTS/$i %{buildroot}%{pecl_testdir}/%{pecl_name}/$i
-done
 for i in $(grep 'role="doc"' package.xml | sed -e 's/^.*name="//;s/".*$//')
 do install -Dpm 644 NTS/$i %{buildroot}%{pecl_docdir}/%{pecl_name}/$i
 done
@@ -174,7 +175,6 @@ fi
 
 %files
 %doc %{pecl_docdir}/%{pecl_name}
-%doc %{pecl_testdir}/%{pecl_name}
 %config(noreplace) %{php_inidir}/%{ini_name}
 %{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
@@ -188,6 +188,7 @@ fi
 %changelog
 * Thu Jul 21 2016 Carl George <carl.george@rackspace.com> - 1.1.3-1.ius
 - Port from Fedora to IUS
+- Don't install/register tests
 
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.1.3-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
