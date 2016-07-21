@@ -1,3 +1,5 @@
+# IUS spec file for php56u-pecl-rrd, forked from:
+#
 # remirepo/fedora spec file for php-pecl-rrd
 #
 # Copyright (c) 2011-2015 Remi Collet
@@ -6,50 +8,56 @@
 #
 # Please, preserve the changelog entries
 #
-%{!?php_inidir:  %global php_inidir  %{_sysconfdir}/php.d}
-%{!?__pecl:      %global __pecl      %{_bindir}/pecl}
-%{!?__php:       %global __php       %{_bindir}/php}
-
-%global with_zts  0%{?__ztsphp:1}
 %global pecl_name rrd
-%if "%{php_version}" < "5.6"
-%global ini_name  %{pecl_name}.ini
-%else
 %global ini_name  40-%{pecl_name}.ini
-%endif
+%global php_base php56u
+
+%bcond_without zts
 
 Summary:      PHP Bindings for rrdtool
-Name:         php-pecl-rrd
+Name:         %{php_base}-pecl-%{pecl_name}
 Version:      1.1.3
-Release:      8%{?dist}
+Release:      1.ius%{?dist}
 License:      BSD
 Group:        Development/Languages
 URL:          http://pecl.php.net/package/rrd
 
 Source0:      http://pecl.php.net/get/%{pecl_name}-%{version}.tgz
 
-BuildRequires: php-devel >= 5.3.2
+BuildRequires: %{php_base}-devel
 BuildRequires: rrdtool
 BuildRequires: pkgconfig(librrd) >= 1.3.0
-BuildRequires: php-pear
+BuildRequires: %{php_base}-pear
 
-Requires(post): %{__pecl}
-Requires(postun): %{__pecl}
+Requires(post): %{php_base}-pear
+Requires(postun): %{php_base}-pear
 Requires:     php(zend-abi) = %{php_zend_api}
 Requires:     php(api) = %{php_core_api}
 
 Conflicts:    rrdtool-php
+
+# provide the stock name
+Provides:     php-pecl-%{pecl_name} = %{version}
+Provides:     php-pecl-%{pecl_name}%{?_isa} = %{version}
+
+# provide the stock and IUS names without pecl
+Provides:     php-%{pecl_name} = %{version}
+Provides:     php-%{pecl_name}%{?_isa} = %{version}
+Provides:     %{php_base}-%{pecl_name} = %{version}
+Provides:     %{php_base}-%{pecl_name}%{?_isa} = %{version}
+
+# provide the stock and IUS names in pecl() format
 Provides:     php-pecl(%{pecl_name}) = %{version}
 Provides:     php-pecl(%{pecl_name})%{?_isa} = %{version}
-Provides:     php-%{pecl_name} = %{version}%{?pre}
-Provides:     php-%{pecl_name}%{?_isa} = %{version}%{?pre}
+Provides:     %{php_base}-pecl(%{pecl_name}) = %{version}
+Provides:     %{php_base}-pecl(%{pecl_name})%{?_isa} = %{version}
 
+# conflict with the stock name
+Conflicts: php-pecl-%{pecl_name} < %{version}
 
-%if 0%{?fedora} < 20 && 0%{?rhel} < 7
-# Filter shared private
-%{?filter_provides_in: %filter_provides_in %{_libdir}/.*\.so$}
+%{?filter_provides_in: %filter_provides_in %{php_extdir}/.*\.so$}
+%{?filter_provides_in: %filter_provides_in %{php_ztsextdir}/.*\.so$}
 %{?filter_setup}
-%endif
 
 
 %description
@@ -57,7 +65,7 @@ Procedural and simple OO wrapper for rrdtool - data logging and graphing
 system for time series data.
 
 
-%prep 
+%prep
 %setup -c -q
 
 mv %{pecl_name}-%{version} NTS
@@ -67,22 +75,24 @@ cat > %{ini_name} << 'EOF'
 extension=%{pecl_name}.so
 EOF
 
-%if %{with_zts}
+%if %{with zts}
 cp -r  NTS ZTS
 %endif
 
 
 %build
-cd NTS
+pushd NTS
 %{_bindir}/phpize
 %configure --with-php-config=%{_bindir}/php-config
 make %{?_smp_mflags}
+popd
 
-%if %{with_zts}
-cd ../ZTS
+%if %{with zts}
+pushd ZTS
 %{_bindir}/zts-phpize
 %configure --with-php-config=%{_bindir}/zts-php-config
 make %{?_smp_mflags}
+popd
 %endif
 
 
@@ -95,7 +105,7 @@ install -D -m 644 %{ini_name} %{buildroot}%{php_inidir}/%{ini_name}
 # Install XML package description
 install -D -m 644 package.xml %{buildroot}%{pecl_xmldir}/%{name}.xml
 
-%if %{with_zts}
+%if %{with zts}
 make install -C ZTS INSTALL_ROOT=%{buildroot}
 install -D -m 644 %{ini_name} %{buildroot}%{php_ztsinidir}/%{ini_name}
 %endif
@@ -110,16 +120,17 @@ done
 
 
 %check
-%if %{with_zts}
+%if %{with zts}
 %{__ztsphp} --no-php-ini \
-    --define extension=ZTS/modules/%{pecl_name}.so \
+    --define extension=%{buildroot}%{php_ztsextdir}/%{pecl_name}.so \
     --modules | grep %{pecl_name}
 %endif
 
-cd NTS
 %{__php} --no-php-ini \
-    --define extension=modules/%{pecl_name}.so \
+    --define extension=%{buildroot}%{php_extdir}/%{pecl_name}.so \
     --modules | grep %{pecl_name}
+
+pushd NTS
 
 # See https://bugzilla.redhat.com/1224530 - segfault on ARM
 %ifnarch %{arm}
@@ -144,15 +155,21 @@ REPORT_EXIT_STATUS=1 \
 %{_bindir}/php -n run-tests.php --show-diff
 %endif
 
+popd
 
+
+%if 0%{?pecl_install:1}
 %post
 %{pecl_install} %{pecl_xmldir}/%{name}.xml >/dev/null || :
+%endif
 
 
+%if 0%{?pecl_uninstall:1}
 %postun
-if [ $1 -eq 0 ] ; then
+if [ $1 -eq 0 ]; then
     %{pecl_uninstall} %{pecl_name} >/dev/null || :
 fi
+%endif
 
 
 %files
@@ -162,13 +179,16 @@ fi
 %{php_extdir}/%{pecl_name}.so
 %{pecl_xmldir}/%{name}.xml
 
-%if %{with_zts}
+%if %{with zts}
 %config(noreplace) %{php_ztsinidir}/%{ini_name}
 %{php_ztsextdir}/%{pecl_name}.so
 %endif
 
 
 %changelog
+* Thu Jul 21 2016 Carl George <carl.george@rackspace.com> - 1.1.3-1.ius
+- Port from Fedora to IUS
+
 * Thu Feb 04 2016 Fedora Release Engineering <releng@fedoraproject.org> - 1.1.3-8
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_24_Mass_Rebuild
 
